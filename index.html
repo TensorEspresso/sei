@@ -234,9 +234,9 @@ const FIXED = [
   {k:"wins", l:"W-L", fmt:(v,r)=>`<td>${r.wins_all??v}-${((r.games_all??r.games)||0)-(r.wins_all??v)}</td>`, core:true},
   {k:"margin", l:"Margin", fmt:v=>`<td>${v>0?"+":""}${Math.round(v)}</td>`},
   {k:"total", l:"SEI", fmt:z, tip:"Sigma Efficiency Index = weighted sum of offense + defense z-scores. Units: SDs vs that season's field. Higher = better.", core:true},
-  {k:"off_score", l:"Off", fmt:z, tip:"Weighted sum of the 8 offensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"off_score", l:"Off", fmt:z, tip:"Weighted sum of the 13 offensive z-scores (weights in each metric's tooltip). SDs vs season field."},
   {k:"off_rank", l:"Off Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by offense score (click header to sort the whole table by offense).", core:true},
-  {k:"def_score", l:"Def", fmt:z, tip:"Weighted sum of the 8 defensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"def_score", l:"Def", fmt:z, tip:"Weighted sum of the 14 defensive z-scores (weights in each metric's tooltip). SDs vs season field."},
   {k:"def_rank", l:"Def Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by defense score (click header to sort the whole table by defense).", core:true},
   {k:"sp_rank", l:"SP+ Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"F/+ (SP+) overall rank for comparison."},
   {k:"sp_delta", l:"vs SP+", fmt:(v,r)=>spDelta(r), tip:"SP+ rank − our rank. Positive = we rank them higher than SP+ does.", core:true},
@@ -395,13 +395,20 @@ function philoHtml(){
     <div class="sub">How the Sigma Efficiency Index works, and where it disagrees with SP+, FEI, and the polls on purpose.</div>
 
     <h3>1. The model ranks process, not results</h3>
-    <p>The Sigma Efficiency Index (SEI) uses <b>play-by-play efficiency</b>:
-    PPA (average point value added per play), success rate, and explosives with
-    field-position adjustment. It also uses pressure metrics (havoc, stuff
-    rate). It reads <b>drives</b> as well: the share of drives that reach the
-    red zone, convert there, and score. The model never uses the final score.
-    Two teams can have the same point margin and rank far apart here. One team
-    may generate big plays. The other may grind out field goals.
+    <p>The Sigma Efficiency Index (SEI) uses <b>play-by-play efficiency</b>.
+    Its engine is PPA over expected: each play is scored against what the
+    league usually does in that exact situation (down, distance, field
+    position). A team gets credit for beating the situation, not for facing
+    easy ones. The model splits this by down: early downs and third downs
+    are measured separately, plus the median third-down distance each team
+    faces — a team that stays on schedule gets shorter third downs. On top
+    sit explosives (plays of ≥20 yards), the drive chain (red-zone arrival,
+    red-zone conversion, touchdowns, field goals), turnovers split into
+    interceptions and fumbles, aggression on fourth down, and <b>team
+    discipline</b>: penalties and penalty yards, offense and defense. The
+    model never uses the final score. Two teams can have the same point
+    margin and rank far apart here. One team may generate big plays. The
+    other may grind out field goals.
     SP+ and Elo do the opposite: they are <b>margin-of-victory</b> models that
     use scoring as the signal. When our board and SP+ disagree, this is usually
     the whole argument: how they played vs. how the scoreboard went.</p>
@@ -445,8 +452,9 @@ function philoHtml(){
       The teams where SP+ and we disagree most (the vs SP+ column) are the
       teams most likely to move by November.</li>
       <li><b>Special teams and luck.</b> The model does not cover them. The
-      model prices turnovers 3 times (play PPA, the drive chain, the TO
-      column). That is why live-or-die-by offenses do not inflate much here.
+      model prices turnovers more than once (the down-by-down engine, the
+      drive chain, the INT/fumble columns). That is why live-or-die-by
+      offenses do not inflate much here.
       But the model captures the <i>field-position cost</i> of a giveaway
       (short fields given to opponents) only indirectly.</li>
       <li><b>Transfers, injuries, coordinator changes.</b> The model has no
