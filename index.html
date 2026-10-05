@@ -120,6 +120,9 @@
   /* metrics glossary + philosophy panels */
   #glossary, #philo { display: none; background: var(--panel); border: 1px solid var(--line);
               border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; }
+  /* wide glossary tables scroll inside the panel instead of stretching
+     the whole page sideways on phones */
+  #glossary { overflow-x: auto; }
   #glossary.open, #philo.open { display: block; }
   #glossary h2, #philo h2 { margin: 0 0 4px; font-size: 16px; }
   #glossary .sub, #philo .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 12px; }
@@ -143,6 +146,10 @@
                           font-family: var(--mono); font-size: 11px; }
   .gtable .side-off { color: #7ea6d9; } .gtable .side-def { color: #d9a05b; }
   .gtable td.desc { white-space: normal; color: var(--text); min-width: 340px; }
+  @media (max-width: 640px) {
+    .gtable td.desc { min-width: 180px; }
+    .gtable td.name { white-space: normal; }
+  }
   /* weekly SEI-vs-SP+ report */
   #weekly { background: var(--panel); border: 1px solid var(--line);
             border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; }
