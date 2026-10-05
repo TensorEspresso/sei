@@ -14,11 +14,14 @@
   @keyframes fadein { from { opacity: 0; transform: translateY(-4px); }
                       to { opacity: 1; transform: none; } }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; padding-top: var(--thtop, 57px); background: var(--bg);
+         color: var(--text); font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  /* fixed (not sticky): the table is wider than the viewport; a sticky
+     header slides left on horizontal scroll and exposes table rows above */
   header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
            padding: 14px 20px; border-bottom: 1px solid var(--line);
-           background: var(--panel); position: sticky; top: 0; z-index: 5; }
+           background: var(--panel); position: fixed;
+           top: 0; left: 0; right: 0; z-index: 5; }
   h1 { font-size: 16px; margin: 0; font-weight: 650; }
   h1 span { color: var(--dim); font-weight: 400; font-size: 13px; margin-left: 8px; }
   .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
