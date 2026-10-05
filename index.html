@@ -363,68 +363,73 @@ function philoHtml(){
   return `<button class="close" onclick="document.getElementById('philo').classList.remove('open');
       document.getElementById('philoBtn').classList.remove('on')">close</button>
     <h2>The SEI Scheme</h2>
-    <div class="sub">How the Sigma Efficiency Index works — and where it deliberately disagrees with SP+, FEI, and the polls.</div>
+    <div class="sub">How the Sigma Efficiency Index works, and where it disagrees with SP+, FEI, and the polls on purpose.</div>
 
-    <h3>1. Process over results</h3>
-    <p>The Sigma Efficiency Index (SEI) is built from <b>play-by-play efficiency</b> — PPA (average
-    point value added per play), success rate, field-position-adjusted explosives —
-    plus pressure metrics (havoc, stuff rate), read <b>drive by drive</b> as
-    well: what share of drives reach the red zone, convert there, and score at
-    all. It never looks at the final score. Two teams can have identical point
-    margins and rank far apart here if one generated big plays and the other
-    ground out field goals.
-    SP+ and Elo are the opposite: they are <b>margin-of-victory</b> models that
-    use scoring as the signal. When our board and SP+ disagree, that is usually
-    the whole argument — "how they played" vs "how the scoreboard went."</p>
+    <h3>1. The model ranks process, not results</h3>
+    <p>The Sigma Efficiency Index (SEI) uses <b>play-by-play efficiency</b>:
+    PPA (average point value added per play), success rate, and explosives with
+    field-position adjustment. It also uses pressure metrics (havoc, stuff
+    rate). It reads <b>drives</b> as well: the share of drives that reach the
+    red zone, convert there, and score. The model never uses the final score.
+    Two teams can have the same point margin and rank far apart here. One team
+    may generate big plays. The other may grind out field goals.
+    SP+ and Elo do the opposite: they are <b>margin-of-victory</b> models that
+    use scoring as the signal. When our board and SP+ disagree, this is usually
+    the whole argument: how they played vs. how the scoreboard went.</p>
 
-    <h3>2. Everything is opponent-adjusted, but simply</h3>
-    <p>Each team's per-game numbers are shifted by opponent strength against a
-    replacement-level benchmark, then re-averaged. No hidden Markov chains, no
-    Bayesian priors carried across seasons. SP+ projects through the schedule;
-    we describe what happened, adjusted for who was across the line of scrimmage.</p>
+    <h3>2. The model adjusts for opponents, simply</h3>
+    <p>The model shifts each team's per-game numbers by opponent strength
+    against a replacement-level benchmark. Then it re-averages them. The model
+    uses no hidden Markov chains and no Bayesian priors across seasons. SP+
+    projects through the schedule. We describe what happened, adjusted for the
+    opponent.</p>
 
-    <h3>3. The composite is additive — and that's a choice</h3>
+    <h3>3. The composite is additive. We chose this.</h3>
     <p>Total = weighted offense z + weighted defense z (weights in the Metrics
-    panel). A mediocre offense costs a fraction of an SD; an elite defense buys
-    nearly two. Point-differential models can't separate those halves cleanly,
-    so teams with one historically good side — Oklahoma's defense in 2026 is the
-    standing example — rank higher here than in SP+. We tested penalizing that
-    imbalance and it made SP+-agreement <i>worse</i>, so we left the additive
-    form alone.</p>
+    panel). A mediocre offense costs a fraction of 1 SD. An elite defense buys
+    nearly 2 SD. Point-differential models cannot separate the two halves
+    cleanly. So a team with one historically good side ranks higher here than in
+    SP+. Oklahoma's 2026 defense is the standing example. We tested a penalty
+    for that imbalance. It made SP+-agreement <i>worse</i>. So we kept the
+    additive form.</p>
 
-    <h3>4. Small samples are taken seriously, not punted on</h3>
-    <p>Early in the season, features are pulled toward the season mean by
-    n/(n+4) before ranking (shrinkage). It barely matters by week 6 and it
-    exists because 4-game profiles are noisy. It is deliberately mild: we would
-    rather let a real signal through than smother it with priors we can't
-    validate.</p>
+    <h3>4. The model trusts small samples at a discount</h3>
+    <p>Early in the season, 4-game profiles contain a lot of noise. The model
+    shrinks each feature toward the season mean before it ranks teams. It
+    multiplies the distance from the mean by n/(n+4). The value of n is the
+    number of games played. A 4-game team keeps half of its distance from the
+    mean. A 12-game team keeps 75% of it. The shrink factor is small on
+    purpose. A small factor keeps real early signal. A large factor hides that
+    signal behind a prior we cannot test. The effect matters only when teams
+    play unequal numbers of games. By week 6, the effect is small.</p>
 
-    <h3>5. FBS-only for the model, real records for the reader</h3>
-    <p>Games against FCS opponents are excluded from every rate, adjustment,
-    and ranking — a 55-0 win over a cupcake should not move an efficiency
-    profile. The W-L you see, though, is the real one, FCS wins included.
-    SP+ handles FCS games by discounting them; we think leaving them out
-    entirely is more honest at 5 games. The cost: we give zero schedule
-    credit for connections through small schools.</p>
+    <h3>5. The model uses FBS games only. The reader sees real records.</h3>
+    <p>Games against FCS opponents do not enter any rate, adjustment, or
+    ranking. A 55-0 win over an FCS team should not move an efficiency profile.
+    The W-L column shows the real record, FCS wins included. SP+ discounts FCS
+    games. We exclude them. At 5 games, exclusion is more honest. The cost: the
+    model gives no schedule credit through FCS opponents.</p>
 
-    <h3>What we think we're bad at</h3>
+    <h3>What the model does badly</h3>
     <ul>
-      <li><b>Early season.</b> Any efficiency model at 4–5 games is a rumor.
-      The teams where SP+ and we disagree most (check the vs SP+ column) are
-      the ones most likely to move by November.</li>
-      <li><b>Special teams and luck.</b> Not modeled. Turnovers are priced
-      three times (play PPA, the drive chain, the TO column), which is why
-      live-die-by offenses don't inflate much here — but the <i>field-position
-      cost</i> of a giveaway (short fields gifted to opponents) is only
-      captured indirectly.</li>
+      <li><b>Early season.</b> At 4–5 games, any efficiency model is a rumor.
+      The teams where SP+ and we disagree most (the vs SP+ column) are the
+      teams most likely to move by November.</li>
+      <li><b>Special teams and luck.</b> The model does not cover them. The
+      model prices turnovers 3 times (play PPA, the drive chain, the TO
+      column). That is why live-or-die-by offenses do not inflate much here.
+      But the model captures the <i>field-position cost</i> of a giveaway
+      (short fields given to opponents) only indirectly.</li>
       <li><b>Transfers, injuries, coordinator changes.</b> The model has no
-      roster. It re-learns from plays, which takes weeks.</li>
+      roster. After these changes, it re-learns from plays. That takes
+      weeks.</li>
       <li><b>Playoffs and resumes.</b> The composite answers "who is
-      playing well," not "who deserves in." Those are different questions.</li>
+      playing well." It does not answer "who deserves in." Those are different
+      questions.</li>
     </ul>
-    <p style="color:var(--dim)">Validation: against final SP+ at season's end,
-    this composite's rank correlation is ~0.89 (2024, 2025) — genuinely close,
-    genuinely not the same model.</p>`;
+    <p style="color:var(--dim)">Validation: the rank correlation against final
+    SP+ is about 0.89 in 2024 and 2025. The models are close. They are not the
+    same model.</p>`;
 }
 
 // map a column key (in any mode) to its key in the current mode
