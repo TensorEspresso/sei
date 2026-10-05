@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Σ SEI — Sigma Efficiency Index</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23171a21'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='40' font-weight='bold' fill='%235b7cfa' text-anchor='middle'%3E%CE%A3%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --line: #2a2f3a;
+    --text: #e6e9ef; --dim: #8b93a3; --accent: #5b7cfa; --good: #3fbf6f;
+    --bad: #e05555; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @keyframes fadein { from { opacity: 0; transform: translateY(-4px); }
+                      to { opacity: 1; transform: none; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+           padding: 14px 20px; border-bottom: 1px solid var(--line);
+           background: var(--panel); position: sticky; top: 0; z-index: 5; }
+  h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  h1 span { color: var(--dim); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  select, input[type=search] {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 10px; font: inherit; }
+  input[type=search] { width: 200px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { background: var(--panel2); color: var(--dim); border: 0;
+                padding: 6px 14px; font: inherit; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  /* quiet view-density toggle: not a content button, deliberately low-key */
+  #dens.ghost { background: none; border: none; color: var(--dim); font: inherit;
+                font-size: 12px; padding: 6px 4px; cursor: pointer; opacity: .75; }
+  #dens.ghost:hover { opacity: 1; text-decoration: underline; }
+  #dens.ghost.on { color: var(--accent); opacity: 1; text-decoration: underline; }
+  .seg .grp { font-size: 11px; color: var(--dim); align-self: center; padding: 0 8px;
+              text-transform: uppercase; letter-spacing: .05em; }
+  #modehint { flex-basis: 100%; order: 10; margin: -4px 0 -6px;
+              color: var(--dim); font-size: 12px; line-height: 1.4; }
+  #modehint b { color: var(--text); font-weight: 600; }
+  main { padding: 16px 20px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line);
+           white-space: nowrap; }
+  th { color: var(--dim); font-weight: 600; font-size: 12px; text-transform: uppercase;
+       letter-spacing: .04em; cursor: pointer; user-select: none; position: sticky;
+       top: var(--thtop, 57px); background: var(--panel); z-index: 2; }
+  th.l, td.l { text-align: left; }
+  th.sorted { color: var(--accent); }
+  th.sorted::after { content: " ▾"; font-size: 10px; }
+  th.sorted.asc::after { content: " ▴"; }
+  th.off-h { color: #7ea6d9; } th.def-h { color: #d9a05b; }
+  tr.row:nth-child(even) { background: rgba(255,255,255,.022); }
+  tr.row:hover { background: var(--panel2); cursor: pointer; }
+  td.team { font-weight: 600; }
+  td.team .chip { display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+                  margin-right: 7px; vertical-align: baseline; background: var(--dim); }
+  .conf { color: var(--dim); font-size: 12px; }
+  .delta { font-size: 12px; }
+  .delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+  /* heat shading for z-score cells: alpha scales with |z| (cap ~2.5 SD) */
+  td.heat { background: color-mix(in srgb, var(--good) calc(var(--a) * 1%), transparent); }
+  td.heat.down { background: color-mix(in srgb, var(--bad) calc(var(--a) * 1%), transparent); }
+  #glossary, #philo, #detail { animation: fadein .18s ease-out; }
+  .gcard { display: grid; grid-template-columns: 110px 1fr 52px; align-items: center;
+           gap: 8px; margin: 2px 0; }
+  .gcard .lab { color: var(--text); font-size: 12px; font-weight: 600; }
+  .gcard .val { font-family: var(--mono); font-size: 12px; text-align: right; }
+  .gsec { margin-top: 12px; }
+  #detail { display: none; background: var(--panel); border: 1px solid var(--line);
+            border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
+  #detail.open { display: block; }
+  #detail h2 { margin: 0 0 2px; font-size: 18px; }
+  #detail .sub { color: var(--dim); margin-bottom: 12px; }
+  .close { float: right; background: none; border: 1px solid var(--line); color: var(--dim);
+           border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .zrow { display: grid; grid-template-columns: 150px 1fr 52px; align-items: center;
+          gap: 8px; margin: 3px 0; }
+  .zrow .lab { color: var(--dim); font-size: 12.5px; cursor: help; }
+  .zrow .val { font-family: var(--mono); font-size: 12.5px; text-align: right; }
+  .pbar { position: relative; height: 14px; background: var(--panel2); border-radius: 3px;
+          overflow: hidden; }
+  .pbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px 0 0 2px; }
+  .pbar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px;
+                 width: 1px; background: var(--line); }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em;
+       color: var(--dim); margin: 14px 0 6px; }
+  .statline { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .statline div { font-family: var(--mono); }
+  .statline b { display: block; font-size: 17px; }
+  .statline span { color: var(--dim); font-size: 11.5px; text-transform: uppercase; }
+  .log { width: 100%; font-size: 13px; }
+  .log td, .log th { padding: 3px 8px; }
+  /* result/score cells: dedicated classes so they don't collide with the
+     table-wide td.l (left-align) and gtable td.w (weight) rules.
+     NOTE: the win/loss classes here are .win/.loss (not .w/.l) precisely
+     because .l is the global left-align class — `class="l opp l"` would
+     make every opponent name red. .al is the log's own left-align class. */
+  .log td.al { text-align: left; }
+  .log .res { text-align: center; font-weight: 700; width: 34px; }
+  .log .res.win, .log .pts.win, .log .opp.win { color: var(--good); }
+  .log .res.loss, .log .pts.loss, .log .opp.loss { color: var(--bad); }
+  .log .res.tie, .log .pts.tie, .log .opp.tie { color: var(--dim); }
+  .log .pts { font-family: var(--mono); text-align: center; }
+  .foot { color: var(--dim); font-size: 12px; margin-top: 12px; }
+  details.raw { margin-top: 10px; }
+  details.raw summary { cursor: pointer; color: var(--dim); font-size: 12.5px; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 2px 14px; margin-top: 8px; font-family: var(--mono); font-size: 12px; }
+  .kv div { display: flex; justify-content: space-between; gap: 8px;
+            border-bottom: 1px dotted var(--line); }
+  .kv span { color: var(--dim); }
+  /* metrics glossary + philosophy panels */
+  #glossary, #philo { display: none; background: var(--panel); border: 1px solid var(--line);
+              border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; }
+  #glossary.open, #philo.open { display: block; }
+  #glossary h2, #philo h2 { margin: 0 0 4px; font-size: 16px; }
+  #glossary .sub, #philo .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 12px; }
+  #philo { max-width: 780px; font-size: 13.5px; line-height: 1.55; }
+  #philo h3 { margin: 16px 0 4px; font-size: 13px; text-transform: uppercase;
+              letter-spacing: .05em; color: var(--dim); }
+  #philo p { margin: 6px 0; }
+  #philo ul { margin: 6px 0; padding-left: 20px; }
+  #philo li { margin: 4px 0; }
+  #philo b { color: var(--text); }
+  .zgrp { color: var(--dim); font-size: 10.5px; text-transform: uppercase;
+          letter-spacing: .05em; margin: 10px 0 3px; border-bottom: 1px solid var(--line); }
+  .gtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .gtable th, .gtable td { padding: 7px 10px; border-bottom: 1px solid var(--line);
+                           text-align: left; vertical-align: top; }
+  .gtable th { color: var(--dim); font-size: 11.5px; text-transform: uppercase;
+               letter-spacing: .04em; }
+  .gtable td.w { text-align: right; font-family: var(--mono); white-space: nowrap; }
+  .gtable td.name { white-space: nowrap; font-weight: 600; }
+  .gtable td.name small { color: var(--dim); font-weight: 400; display: block;
+                          font-family: var(--mono); font-size: 11px; }
+  .gtable .side-off { color: #7ea6d9; } .gtable .side-def { color: #d9a05b; }
+  .gtable td.desc { white-space: normal; color: var(--text); min-width: 340px; }
+  /* weekly SEI-vs-SP+ report */
+  #weekly { background: var(--panel); border: 1px solid var(--line);
+            border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+  #weekly h2 { font-size: 15px; margin: 0 0 2px; }
+  #weekly .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 10px; }
+  .wteam { border-top: 1px solid var(--line); padding: 10px 0; }
+  .wteam .whead { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .wteam .wname { font-weight: 650; }
+  .wteam .wrank { font-family: var(--mono); font-size: 12.5px; color: var(--dim); }
+  .wteam .wdelta { font-family: var(--mono); font-size: 12.5px; }
+  .wteam .wdelta.up { color: var(--good); } .wteam .wdelta.down { color: var(--bad); }
+  .wteam p.expl { margin: 6px 0 0; font-size: 13.5px; line-height: 1.5; }
+  #weekly .wfoot { color: var(--dim); font-size: 11.5px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Σ SEI <span id="subtitle">Sigma Efficiency Index · efficiency, not margin</span></h1>
+  <div class="controls">
+    <select id="season"></select>
+    <input type="search" id="q" placeholder="filter team / conference…">
+    <span class="seg" id="mode">
+      <button data-m="z" class="on">z</button>
+      <button data-m="adj">Adjusted</button>
+      <button data-m="raw">Raw</button>
+    </span>
+    <span id="modehint"></span>
+    <span class="seg" id="glossbtn"><button id="gloss">Metrics</button></span>
+    <span class="seg" id="philobtn"><button id="philoBtn">Philosophy</button></span>
+    <button id="dens" class="ghost" title="Show only the core columns">compact</button>
+  </div>
+</header>
+<main>
+  <div id="glossary"></div>
+  <div id="philo"></div>
+  <div id="weekly"></div>
+  <div id="detail"></div>
+  <table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
+  <div class="foot" id="foot"></div>
+</main>
+<script>
+"use strict";
+let SEASON = null, MODE = "z", ROWS = [], METS = [], COLORS = {}, WEEKLY = null,
+    SORT = "total_rank", DIR = 1;
+// compact = core columns only (metrics live in the tap-to-open detail view).
+// auto-on for narrow screens; user can override, choice persists.
+let COMPACT = (()=>{
+  const saved = localStorage.getItem("cfb_compact");
+  return saved===null ? window.innerWidth < 900 : saved==="1";
+})();
+
+// fixed columns (never mode-dependent); core:true = kept in compact mode
+const FIXED = [
+  {k:"total_rank", l:"Rk", fmt:v=>v, core:true},
+  {k:"team", l:"Team", left:true, fmt:v=>teamCell(v), core:true},
+  {k:"conference", l:"Conf", left:true, fmt:v=>`<td class="conf">${v||""}</td>`},
+  {k:"wins", l:"W-L", fmt:(v,r)=>`<td>${r.wins_all??v}-${((r.games_all??r.games)||0)-(r.wins_all??v)}</td>`, core:true},
+  {k:"margin", l:"Margin", fmt:v=>`<td>${v>0?"+":""}${Math.round(v)}</td>`},
+  {k:"total", l:"SEI", fmt:z, tip:"Sigma Efficiency Index = weighted sum of offense + defense z-scores. Units: SDs vs that season's field. Higher = better.", core:true},
+  {k:"off_score", l:"Off", fmt:z, tip:"Weighted sum of the 8 offensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"off_rank", l:"Off Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by offense score (click header to sort the whole table by offense).", core:true},
+  {k:"def_score", l:"Def", fmt:z, tip:"Weighted sum of the 8 defensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"def_rank", l:"Def Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by defense score (click header to sort the whole table by defense).", core:true},
+  {k:"sp_rank", l:"SP+ Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"F/+ (SP+) overall rank for comparison."},
+  {k:"sp_delta", l:"vs SP+", fmt:(v,r)=>spDelta(r), tip:"SP+ rank − our rank. Positive = we rank them higher than SP+ does.", core:true},
+];
+
+// metric column value key + formatter for the current MODE
+function mKey(m){ return MODE==="z" ? m.z : MODE==="adj" ? "adjv_"+m.adj : "raw_"+m.raw; }
+function mFmt(m){
+  if (MODE==="z") return z;
+  return (v)=>{
+    if (v==null) return "<td>—</td>";
+    if (m.fmt==="pct") return `<td>${(v*100).toFixed(1)}%</td>`;
+    if (m.fmt==="rate") return `<td>${v.toFixed(1)}</td>`;
+    if (m.fmt==="ppa") return `<td class="delta ${v>=0?"up":"down"}">${v>=0?"+":""}${v.toFixed(2)}</td>`;
+    return `<td>${(+v.toFixed(3))}</td>`;
+  };
+}
+function metricCols(){
+  return METS.map(m=>({
+    k: mKey(m), l: m.short, side: m.side,
+    tip: m.desc + (m.weight? ` (weight ${m.weight.toFixed(2)})` : " (weight 0)"),
+    fmt: mFmt(m),
+  }));
+}
+
+function z(v){ if(v==null) return "<td>—</td>";
+  const c = v>=0 ? "up":"down";
+  const a = Math.min(Math.abs(v)/2.5, 1) * 26;   // heat alpha, %
+  return `<td class="delta ${c} heat ${c}" style="--a:${a.toFixed(0)}">${v>=0?"+":""}${v.toFixed(2)}</td>`; }
+function spDelta(r){
+  if(r.total_rank==null || r.sp_rank==null) return "<td>—</td>";
+  const d = r.sp_rank - r.total_rank;   // + = we rank them higher than SP+
+  const c = d>0?"up": d<0?"down":"";
+  return `<td class="delta ${c}">${d>0?"+":""}${Math.round(d)}</td>`;
+}
+function chipHtml(name){
+  const col = COLORS[name] || "";
+  return col ? `<span class="chip" style="background:${col}"></span>`
+             : `<span class="chip"></span>`;
+}
+function teamCell(name){
+  return `<td class="team">${chipHtml(name)}${name}</td>`;
+}
+function rankKey(){ return "total_rank"; }
+
+async function boot(){
+  const setThTop = ()=> document.documentElement.style
+    .setProperty("--thtop", document.querySelector("header").offsetHeight + "px");
+  setThTop();
+  window.addEventListener("resize", setThTop);
+  METS = await (await fetch("data/metrics.json")).json();
+  COLORS = await (await fetch("data/colors.json")).json();
+  WEEKLY = await (await fetch("data/weekly.json")).json();
+  const seasons = await (await fetch("data/seasons.json")).json();
+  SEASON = seasons[seasons.length-1];
+  const sel = document.getElementById("season");
+  seasons.forEach(s=>{ const o=document.createElement("option");
+    o.value=s; o.textContent=s; if(s===SEASON) o.selected=true; sel.append(o); });
+  sel.onchange = ()=>{ SEASON=+sel.value; load(); };
+  document.getElementById("q").oninput = draw;
+  const MODE_HINTS = {
+    z: `<b>z-scores</b> — each metric in standard deviations vs all FBS teams that season (0 = average team, +2 = two SDs better). This is what SEI is built from; use it to compare teams and spot profiles.`,
+    adj: `<b>Opponent-adjusted</b> — the actual per-game values, shifted for the strength of the defenses/offenses faced (replacement-level benchmark). Use it to check whether a profile survives the schedule.`,
+    raw: `<b>Raw</b> — unadjusted season values exactly as they happened. Compare against Adjusted to see who the schedule flattered. FCS-opponent games are excluded from all three views.`,
+  };
+  const setHint = ()=> document.getElementById("modehint").innerHTML = MODE_HINTS[MODE];
+  document.querySelectorAll("#mode button").forEach(b=> b.onclick = ()=>{
+    document.querySelectorAll("#mode button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); MODE=b.dataset.m;
+    setHint();
+    document.documentElement.style.setProperty("--thtop",
+      document.querySelector("header").offsetHeight + "px");
+    // keep sorting by the same underlying metric across mode changes
+    SORT = curMetricKey(SORT) ?? rankKey(); DIR = 1; draw();
+  });
+  setHint();
+  const densBtn = document.getElementById("dens");
+  const syncDens = ()=>{
+    densBtn.classList.toggle("on", COMPACT);
+    densBtn.textContent = COMPACT ? "full view" : "compact";
+    // z/adj/raw toggle (and its explainer line) only affect metric columns,
+    // which are hidden in compact mode
+    document.getElementById("mode").style.display = COMPACT ? "none" : "";
+    document.getElementById("modehint").style.display = COMPACT ? "none" : "";
+    requestAnimationFrame(()=> document.documentElement.style.setProperty(
+      "--thtop", document.querySelector("header").offsetHeight + "px"));
+  };
+  densBtn.onclick = ()=>{
+    COMPACT = !COMPACT;
+    localStorage.setItem("cfb_compact", COMPACT ? "1" : "0");
+    // if we're sorted by a column that just got hidden, fall back to rank
+    const visible = FIXED.filter(c=>!COMPACT||c.core).map(c=>c.k)
+                        .concat(COMPACT?[]:METS.map(m=>mKey(m)));
+    if(!visible.includes(SORT)) { SORT = rankKey(); DIR = 1; }
+    syncDens(); draw();
+  };
+  syncDens();
+  document.getElementById("gloss").onclick = ()=>{
+    const g = document.getElementById("glossary");
+    if(!g.dataset.built){ g.innerHTML = glossaryHtml(); g.dataset.built = "1"; }
+    g.classList.toggle("open");
+    document.getElementById("gloss").classList.toggle("on");
+  };
+  document.getElementById("philoBtn").onclick = ()=>{
+    const p = document.getElementById("philo");
+    if(!p.dataset.built){ p.innerHTML = philoHtml(); p.dataset.built = "1"; }
+    p.classList.toggle("open");
+    document.getElementById("philoBtn").classList.toggle("on");
+  };
+  await load();
+}
+
+// full definitions panel (opened from the header "Metrics" button)
+function glossaryHtml(){
+  const row = m => `<tr><td class="name"><span class="side-${m.side}">${m.label}</span>
+      <small>${m.z}</small></td><td class="w">${m.weight.toFixed(2)}</td>
+      <td class="desc">${m.desc}</td></tr>`;
+  const sec = (title, side)=> {
+    const ms = METS.filter(m=>m.side===side);
+    const order = [...new Set(ms.map(m=>m.group))];
+    let body = "";
+    for(const g of order){
+      body += `<tr><td colspan="3" style="color:var(--dim);font-size:11px;
+        text-transform:uppercase;letter-spacing:.05em;padding-top:12px;
+        border-bottom:none">${g}</td></tr>`;
+      body += ms.filter(m=>m.group===g).map(row).join("");
+    }
+    return `<h3>${title}</h3><table class="gtable">
+      <thead><tr><th>Metric</th><th style="text-align:right">Weight</th><th>Definition</th></tr></thead>
+      <tbody>${body}</tbody></table>`;
+  };
+  const summary = `<h3>Summary columns</h3><table class="gtable">
+      <thead><tr><th>Column</th><th></th><th>Definition</th></tr></thead><tbody>` +
+      FIXED.filter(c=>c.tip).map(c=>`<tr><td class="name">${c.l}</td><td class="w"></td>
+        <td class="desc">${c.tip}</td></tr>`).join("") + `</tbody></table>`;
+  return `<button class="close" onclick="document.getElementById('glossary').classList.remove('open');
+      document.getElementById('gloss').classList.remove('on')">close</button>
+    <h2>Metric definitions</h2>
+    <div class="sub">All features are oriented higher = better (allowed rates and
+    TOs given are flipped). Adjusted = opponent-adjusted; z = within-season
+    standard deviations of the adjusted values; weights sum to 1.0 per side.</div>
+    ${sec("Offense", "off")}${sec("Defense", "def")}${summary}`;
+}
+
+// written philosophy panel (header "Philosophy" button)
+function philoHtml(){
+  return `<button class="close" onclick="document.getElementById('philo').classList.remove('open');
+      document.getElementById('philoBtn').classList.remove('on')">close</button>
+    <h2>The SEI Scheme</h2>
+    <div class="sub">How the Sigma Efficiency Index works — and where it deliberately disagrees with SP+, FEI, and the polls.</div>
+
+    <h3>1. Process over results</h3>
+    <p>The Sigma Efficiency Index (SEI) is built from <b>play-by-play efficiency</b> — PPA (average
+    point value added per play), success rate, field-position-adjusted explosives —
+    plus pressure metrics (havoc, stuff rate), read <b>drive by drive</b> as
+    well: what share of drives reach the red zone, convert there, and score at
+    all. It never looks at the final score. Two teams can have identical point
+    margins and rank far apart here if one generated big plays and the other
+    ground out field goals.
+    SP+ and Elo are the opposite: they are <b>margin-of-victory</b> models that
+    use scoring as the signal. When our board and SP+ disagree, that is usually
+    the whole argument — "how they played" vs "how the scoreboard went."</p>
+
+    <h3>2. Everything is opponent-adjusted, but simply</h3>
+    <p>Each team's per-game numbers are shifted by opponent strength against a
+    replacement-level benchmark, then re-averaged. No hidden Markov chains, no
+    Bayesian priors carried across seasons. SP+ projects through the schedule;
+    we describe what happened, adjusted for who was across the line of scrimmage.</p>
+
+    <h3>3. The composite is additive — and that's a choice</h3>
+    <p>Total = weighted offense z + weighted defense z (weights in the Metrics
+    panel). A mediocre offense costs a fraction of an SD; an elite defense buys
+    nearly two. Point-differential models can't separate those halves cleanly,
+    so teams with one historically good side — Oklahoma's defense in 2026 is the
+    standing example — rank higher here than in SP+. We tested penalizing that
+    imbalance and it made SP+-agreement <i>worse</i>, so we left the additive
+    form alone.</p>
+
+    <h3>4. Small samples are taken seriously, not punted on</h3>
+    <p>Early in the season, features are pulled toward the season mean by
+    n/(n+4) before ranking (shrinkage). It barely matters by week 6 and it
+    exists because 4-game profiles are noisy. It is deliberately mild: we would
+    rather let a real signal through than smother it with priors we can't
+    validate.</p>
+
+    <h3>5. FBS-only for the model, real records for the reader</h3>
+    <p>Games against FCS opponents are excluded from every rate, adjustment,
+    and ranking — a 55-0 win over a cupcake should not move an efficiency
+    profile. The W-L you see, though, is the real one, FCS wins included.
+    SP+ handles FCS games by discounting them; we think leaving them out
+    entirely is more honest at 5 games. The cost: we give zero schedule
+    credit for connections through small schools.</p>
+
+    <h3>What we think we're bad at</h3>
+    <ul>
+      <li><b>Early season.</b> Any efficiency model at 4–5 games is a rumor.
+      The teams where SP+ and we disagree most (check the vs SP+ column) are
+      the ones most likely to move by November.</li>
+      <li><b>Special teams and luck.</b> Not modeled. Turnovers are priced
+      three times (play PPA, the drive chain, the TO column), which is why
+      live-die-by offenses don't inflate much here — but the <i>field-position
+      cost</i> of a giveaway (short fields gifted to opponents) is only
+      captured indirectly.</li>
+      <li><b>Transfers, injuries, coordinator changes.</b> The model has no
+      roster. It re-learns from plays, which takes weeks.</li>
+      <li><b>Playoffs and resumes.</b> The composite answers "who is
+      playing well," not "who deserves in." Those are different questions.</li>
+    </ul>
+    <p style="color:var(--dim)">Validation: against final SP+ at season's end,
+    this composite's rank correlation is ~0.89 (2024, 2025) — genuinely close,
+    genuinely not the same model.</p>`;
+}
+
+// map a column key (in any mode) to its key in the current mode
+function curMetricKey(k){
+  const m = METS.find(m => m.z===k || "adjv_"+m.adj===k || "raw_"+m.raw===k);
+  return m ? mKey(m) : (FIXED.some(c=>c.k===k) ? k : null);
+}
+
+async function load(){
+  ROWS = await (await fetch(`data/table-${SEASON}.json`)).json();
+  ROWS.forEach(r=>{ r.sp_delta = (r.total_rank!=null&&r.sp_rank!=null)
+                    ? r.sp_rank-r.total_rank : null; });
+  const n = ROWS.length;
+  document.getElementById("subtitle").textContent =
+    `Sigma Efficiency Index vs SP+ · ${SEASON} · ${n} teams`;
+  drawWeekly();
+  draw();
+}
+
+// weekly SEI-vs-SP+ discrepancy report panel (only for the report's season)
+function drawWeekly(){
+  const el = document.getElementById("weekly");
+  if(!WEEKLY || WEEKLY.season !== SEASON || !(WEEKLY.teams||[]).length){
+    el.innerHTML = ""; el.style.display = "none"; return;
+  }
+  el.style.display = "";
+  const row = t=>{
+    const c = t.delta>0?"up":t.delta<0?"down":"";
+    return `<div class="wteam"><div class="whead">
+      <span class="wname">${chipHtml(t.team)}${t.team}</span>
+      <span class="wrank">SEI #${t.sei_rank} · SP+ #${t.sp_rank} ·
+        ${t.wins}-${t.losses}, margin ${t.margin>0?"+":""}${Math.round(t.margin)}</span>
+      <span class="wdelta ${c}">${t.delta>0?"we rank +":"SP+ ranks +"}${Math.abs(t.delta)}</span>
+      </div>${t.explanation?`<p class="expl">${t.explanation}</p>`:""}</div>`;
+  };
+  el.innerHTML = `<h2>Where we disagree with SP+ this week</h2>
+    <div class="sub">${WEEKLY.intro||""}</div>` +
+    WEEKLY.teams.map(row).join("") +
+    `<div class="wfoot">Biggest rank gaps between the SP+ top 15 and our board ·
+      updated weekly · delta = SP+ rank − SEI rank</div>`;
+}
+
+function draw(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  let rows = ROWS;
+  if(q) rows = rows.filter(r=> (r.team+" "+(r.conference||"")).toLowerCase().includes(q));
+  rows = rows.slice().sort((a,b)=>{
+    let x=a[SORT], y=b[SORT];
+    if(typeof x==="string") return DIR*x.localeCompare(y);
+    if(x==null) return 1; if(y==null) return -1;
+    return DIR*(x-y);
+  });
+  const cols = FIXED.filter(c=> !COMPACT || c.core)
+                    .map(c=>({...c, k: c.k==="total_rank"? rankKey() : c.k}))
+                    .concat(COMPACT ? [] : metricCols());
+  const hr = document.getElementById("thead");
+  hr.innerHTML = cols.map(c=>{
+    const cls = [c.k===SORT?"sorted":"", c.k===SORT&&DIR>0?"asc":"",
+                 c.left?"l":"", c.side==="off"?"off-h": c.side==="def"?"def-h":""].join(" ");
+    return `<th data-k="${c.k}" class="${cls}">${c.l}</th>`;
+  }).join("");
+  hr.querySelectorAll("th").forEach(th=>{
+    th.onclick=()=>{ const k=th.dataset.k; if(k===SORT) DIR=-DIR; else {SORT=k; DIR=1;} draw(); };
+  });
+  document.getElementById("tbody").innerHTML = rows.map(r=> "<tr class='row' data-t='"+
+    r.team.replace(/'/g,"\\'")+"'>"+ cols.map(c=>{
+      if(c.k==="team") return teamCell(r.team);
+      if(c.k==="conference") return `<td class="conf">${r.conference||""}</td>`;
+      if(c.k==="total_rank"||c.k==="off_rank"||c.k==="def_rank") return `<td>${r[c.k]??"—"}</td>`;
+      if(c.k==="sp_delta") return spDelta(r);
+      if(c.k==="wins") return `<td>${r.wins_all??r.wins}-${((r.games_all??r.games)||0)-(r.wins_all??r.wins)}</td>`;
+      if(c.k==="margin") return `<td>${r.margin>0?"+":""}${Math.round(r.margin)}</td>`;
+      return c.fmt(r[c.k], r);
+    }).join("") + "</tr>").join("");
+  document.querySelectorAll("#tbody tr").forEach(tr=>
+    tr.onclick = ()=> openTeam(tr.dataset.t));
+  const modeNote = MODE==="z" ? "z-scores in SDs vs that season's field"
+    : MODE==="adj" ? "opponent-adjusted feature values (the inputs to the z-scores)"
+    : "raw unadjusted season values";
+  document.getElementById("foot").textContent =
+    `${rows.length} teams · season ${SEASON} · ${modeNote} · ` +
+    `"vs SP+" = SP+ rank − our rank (positive = we rank them higher) · ` +
+    `column definitions: the "Metrics" button above`;
+}
+
+function pctBar(p){
+  if(p==null) return "";
+  const hue = p*1.2;              // 0 -> red, 100 -> green
+  const w = Math.max(p, 1);
+  return `<div class="pbar"><i style="width:${w}%;background:hsl(${hue},55%,45%)"></i></div>`;
+}
+function ordinal(n){
+  if(n==null) return "—";
+  const s = ["th","st","nd","rd"], v = n%100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+async function openTeam(name){
+  const d = await (await fetch(`data/team/${SEASON}-${encodeURIComponent(name)}.json`)).json();
+  if(d.error){ alert(d.error); return; }
+  const s = d.summary, sp = d.sp||{};
+  const zBar = (zv)=>{
+    if(zv==null) return "";
+    const w = Math.min(Math.abs(zv)/2.5, 1) * 50;   // half-width, 2.5 SD = full
+    const pos = zv>=0;
+    const left = pos? 50 : 50-w, col = pos? "hsl(145,45%,42%)" : "hsl(0,55%,45%)";
+    return `<div class="pbar"><i style="left:${left}%;width:${w}%;background:${col};
+      border-radius:${pos?"0 2px 2px 0":"2px 0 0 2px"}"></i></div>`;
+  };
+  const gsec = (title, arr)=> `<div class="gsec"><h3>${title}</h3>` + arr.map(x=>
+    `<div class="gcard"><div class="lab">${x.group}</div>${zBar(x.z)}` +
+    `<div class="val" style="color:${x.z>=0?"var(--good)":"var(--bad)"}">${x.z>=0?"+":""}${x.z.toFixed(2)}</div></div>`
+  ).join("") + `</div>`;
+  const msec = (title, arr)=> `<h3>${title}</h3>` + (()=>{
+    let h = "", last = null;
+    for(const x of arr){
+      if(x.group !== last){ h += `<div class="zgrp">${x.group}</div>`; last = x.group; }
+      h += `<div class="zrow"><div class="lab">${x.label}</div>` +
+        pctBar(x.pct!=null? Math.round(x.pct*100):null) +
+        `<div class="val" title="z ${x.z==null?"—":(x.z>=0?"+":"")+x.z.toFixed(2)} · adj ${x.adj==null?"—":(+x.adj.toFixed(3))} · raw ${x.raw==null?"—":(+x.raw.toFixed(3))}">${ordinal(x.pct!=null?Math.round(x.pct*100):null)}</div></div>`;
+    }
+    return h; })();
+  const kv = o => `<div class="kv">` + Object.entries(o)
+    .filter(([k,v])=>v!=null && !["season","team"].includes(k))
+    .map(([k,v])=>`<div><span>${k}</span><b>${typeof v==="number"?+v.toFixed(4):v}</b></div>`).join("") + `</div>`;
+  const log = (d.games||[]).map(g=>{
+    const r = {w:"win", l:"loss", t:"tie"}[g.result.toLowerCase()] || "";
+    return `<tr><td>${g.date}</td><td class="al opp ${r}">${g.home?"vs":"@"} ${g.opponent}</td>` +
+    `<td class="res ${r}">${g.result}</td><td class="pts ${r}">${g.points}–${g.opponent_points}</td></tr>`;
+  }).join("");
+  const el = document.getElementById("detail");
+  el.innerHTML = `<button class="close" onclick="this.parentElement.classList.remove('open')">close</button>
+    <h2>${chipHtml(d.team)}${d.team}</h2><div class="sub">${SEASON} · ${sp.conference||""} ·
+    our #${s.total_rank} (off #${s.off_rank}, def #${s.def_rank}) ·
+    SP+ #${sp.sp_rank??"—"} (off #${sp.sp_off_rank??"—"}, def #${sp.sp_def_rank??"—"})</div>
+    <div class="statline">
+      <div><b>${s.wins_all??s.wins}-${((s.games_all??s.games)||0)-(s.wins_all??s.wins)}</b><span>record</span></div>
+      <div><b>${s.margin>0?"+":""}${Math.round(s.margin)}</b><span>margin</span></div>
+      <div><b>${s.total>=0?"+":""}${s.total.toFixed(2)}</b><span>SEI</span></div>
+      <div><b>${s.off_score>=0?"+":""}${s.off_score.toFixed(2)}</b><span>off z</span></div>
+      <div><b>${s.def_score>=0?"+":""}${s.def_score.toFixed(2)}</b><span>def z</span></div>
+      ${sp.sp_rating!=null?`<div><b>${sp.sp_rating.toFixed(1)}</b><span>SP+ rating</span></div>`:""}
+    </div>
+    <div class="cols">${gsec("Offensive Attributes", d.groups.offense)}${gsec("Defensive Attributes", d.groups.defense)}</div>
+    <div class="cols"><div>${msec("Offense — percentile vs season field (adj)", d.z.offense)}</div>
+                      <div>${msec("Defense — percentile vs season field (adj)", d.z.defense)}</div></div>
+    <h3>Game log</h3>
+    <table class="log"><tbody>${log}</tbody></table>
+    <details class="raw"><summary>raw season stats (unadjusted)</summary>${kv(d.raw)}</details>
+    <details class="raw"><summary>opponent-adjusted features</summary>${kv(d.adj)}</details>`;
+  el.classList.add("open");
+  el.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+boot();
+</script>
+</body>
+</html>
