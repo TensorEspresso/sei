@@ -123,7 +123,7 @@
   /* wide glossary tables scroll inside the panel instead of stretching
      the whole page sideways on phones */
   #glossary { overflow-x: auto; }
-  #glossary.open, #philo.open { display: block; }
+  #glossary.open, #philo.open, #valid.open { display: block; }
   #glossary h2, #philo h2 { margin: 0 0 4px; font-size: 16px; }
   #glossary .sub, #philo .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 12px; }
   #philo { max-width: 780px; font-size: 13.5px; line-height: 1.55; }
@@ -461,23 +461,21 @@ function philoHtml(){
     in 2024 and 2025. The models are close. They are not the same model.</p>`;
 }
 
-// validation panel (header "Validation" button) — E7/E8 out-of-sample tests
+// validation panel (header "Validation" button) — out-of-sample tests
 function validHtml(){
   return `<button class="close" onclick="document.getElementById('valid').classList.remove('open');
       document.getElementById('validBtn').classList.remove('on')">close</button>
     <h2>Validation</h2>
-    <div class="sub">How we test SEI against games it has never seen. Two
-    tests: a postseason holdout (E7) and a week-by-week walk-forward (E8).
-    Seasons: 2024 and 2025. Both tests use the full production pipeline.</div>
+    <div class="sub">We test SEI against games it has never seen. We do not
+    quote in-sample agreement as proof. This page lists every test, what we
+    found, and what we changed. Last update: October 2026.</div>
 
-    <h3>Method — postseason holdout (E7)</h3>
+    <h3>Test 1 — postseason holdout</h3>
     <p>The model builds ratings from the regular season only. It then
-    predicts every postseason game (bowls and the CFP): 92 games per
-    season. A margin model fits on played games, never on the held-out
-    games. We score margin error (MAE), winner accuracy, and Brier score
-    (lower is better; 0.25 = coin flip). SP+ season ratings serve as the
-    baseline. Warning: final SP+ ratings include the postseason in their
-    own computation. The SP+ margin numbers are therefore optimistic.</p>
+    predicts every postseason game: 92 games per season. Nothing about a
+    postseason game enters the rating. SP+ season ratings serve as the
+    baseline. Note: final SP+ ratings include the postseason in their own
+    computation, so the SP+ margin numbers below are optimistic.</p>
 
     <table class="vtable">
       <tr><th>2024 postseason</th><th>MAE</th><th>Win acc</th><th>Brier</th></tr>
@@ -487,16 +485,16 @@ function validHtml(){
       <tr><td>SEI (reg. season only)</td><td>13.4</td><td>67.4%</td><td>0.237</td></tr>
       <tr><td>SP+ (final, leaky)</td><td>10.9</td><td>60.9%</td><td>0.354</td></tr>
     </table>
-    <p>SEI predicts winners as well as or better than SP+ (Brier favors SEI
-    in both years). SP+ predicts margins better. Part of that gap is the
-    SP+ baseline seeing the games it predicts.</p>
+    <p>SEI predicts winners as well as or better than SP+. SP+ predicts
+    margins better. Part of that gap is the SP+ baseline seeing the games
+    it predicts.</p>
 
-    <h3>Method — walk-forward (E8)</h3>
-    <p>At each weekly cutoff, the model rebuilds from games played so far.
-    Then we measure three things: how close the snapshot sits to the final
-    regular-season ratings, how well it predicts all remaining games, and
-    how many of the eventual CFP bracket teams it already ranks in the top
-    12. The CFP field comes from the data, not from a fixed list.</p>
+    <h3>Test 2 — week-by-week walk-forward</h3>
+    <p>At each weekly cutoff, the model rebuilds ratings from games played
+    so far. We measure three things: distance to the final ratings,
+    accuracy on all remaining games, and how many eventual CFP teams the
+    snapshot already ranks in the top 12. The CFP field comes from the
+    data, not from a fixed list.</p>
 
     <table class="vtable">
       <tr><th>2024</th><th>Rank corr</th><th>MAE</th><th>Win acc</th><th>CFP in top-12</th></tr>
@@ -513,37 +511,108 @@ function validHtml(){
       <tr><td>Week 13</td><td>0.97</td><td>12.6</td><td>71.5%</td><td>7 / 12</td></tr>
     </table>
 
+    <h3>Test 3 — twelve seasons of postseason games</h3>
+    <p>Two seasons is a small sample. We repeated the holdout across
+    2014–2025: 12 postseason samples, 474 games. Every change to the
+    model must beat the baseline here, not in one year. This is our
+    adoption rule.</p>
+
+    <table class="vtable">
+      <tr><th>Season</th><th>Win acc</th><th>Brier</th></tr>
+      <tr><td>2014</td><td>53.8%</td><td>0.266</td></tr>
+      <tr><td>2015</td><td>65.9%</td><td>0.223</td></tr>
+      <tr><td>2016</td><td>58.5%</td><td>0.273</td></tr>
+      <tr><td>2017</td><td>60.0%</td><td>0.247</td></tr>
+      <tr><td>2018</td><td>41.0%</td><td>0.352</td></tr>
+      <tr><td>2019</td><td>70.0%</td><td>0.210</td></tr>
+      <tr><td>2020</td><td>65.4%</td><td>0.228</td></tr>
+      <tr><td>2021</td><td>65.8%</td><td>0.217</td></tr>
+      <tr><td>2022</td><td>57.1%</td><td>0.247</td></tr>
+      <tr><td>2023</td><td>50.0%</td><td>0.324</td></tr>
+      <tr><td>2024</td><td>58.7%</td><td>0.257</td></tr>
+      <tr><td>2025</td><td>67.4%</td><td>0.237</td></tr>
+      <tr><th>Mean</th><th>59.5%</th><th>0.257</th></tr>
+    </table>
+    <p>The mean beats a coin flip (0.500 win accuracy, 0.250 Brier) but
+    only modestly. Bowl games are hard for every season-aggregate model.
+    2018 and 2023 were worse than 2024: those years produced many
+    near-pick games that ended in large margins. We also learned that a
+    two-season test can flip on noise. One change "fixed" 2024 and
+    "broke" 2025; the twelve-season test showed it was worse overall.
+    That test now gates every change.</p>
+
+    <h3>Test 4 — unplayed regular-season games</h3>
+    <p>Regular-season games are the bigger sample: about 540 games per
+    season, 6,500 games across 12 seasons. Ratings come from games played
+    before a cutoff; we score every game after it. SEI predicts 75.7% of
+    winners. The betting market sits near 76–78%. This is the number
+    that describes normal weekly use of the rating.</p>
+
+    <h3>What we tried to improve the model</h3>
+    <p>We tested six upgrades under the twelve-season rule. Five failed
+    and one passed.</p>
+    <ul>
+      <li><b>Learned weights (ridge).</b> Weights fitted to past margins
+      beat manual weights on regular-season games. They lost on
+      postseason games. Manual weights survive because they travel
+      better to unfamiliar situations. Rejected.</li>
+      <li><b>Garbage-time filtering.</b> Removing blowout fourth-quarter
+      plays changed nothing across 12 seasons. Rejected.</li>
+      <li><b>Pace (plays per game).</b> Added no signal. Our features are
+      per-play rates; pace only matters as an interaction, not alone.
+      Rejected.</li>
+      <li><b>Forward target.</b> Weights fitted to "next 8 games" from a
+      4-game window lost. Four games give a noisy teacher. Rejected.</li>
+      <li><b>New feature pack.</b> Down-by-down efficiency, third-down
+      distance, and penalty discipline — all built from play data, all
+      gated. They matched nothing extra. SR and PPA already carry that
+      information. Rejected.</li>
+      <li><b>Small neural net.</b> A 16-unit network on both teams'
+      features improved regular-season margin error by 0.39 points. A
+      plain linear model on the same inputs gained 0.33. The gain came
+      from using both teams' full feature vectors per game, not from the
+      network. Rejected as a network; the paired-input design is kept
+      for future game predictions.</li>
+      <li><b>Home-field term (kept).</b> Home teams win 59% of games by
+      about 5 points. SEI ratings are venue-blind, so we add a fitted
+      home term for regular-season game predictions. It adds 1.0 point
+      of win accuracy across 12 seasons. We do not apply it to
+      postseason games: those sites are neutral.</li>
+    </ul>
+
     <h3>Findings</h3>
     <ul>
       <li><b>The rankings settle by late October.</b> Week-9 snapshots sit
-      at 0.88–0.90 against the final ratings. After week 9, movement is
-      small.</li>
+      at 0.88–0.90 against the final ratings.</li>
       <li><b>The playoff picture is visible early.</b> By weeks 9–11, SEI
-      already ranks 6–8 of the eventual 12 bracket teams in its top 12.
-      In both years, the regular-season top 4 all made the CFP field.</li>
+      ranks 6–8 of the eventual 12 CFP teams in its top 12. In both
+      years, the regular-season top 4 all made the field.</li>
       <li><b>The model tracks real change.</b> Indiana 2025 ranked #1 at
-      every cutoff, including week 5. Ohio State 2024 started at #16
-      (a 1–2 start) and rose to #2 by week 13. The model re-rated both
-      as the evidence arrived.</li>
+      every cutoff. Ohio State 2024 started at #16 and rose to #2.</li>
       <li><b>Winner prediction is the strength. Margin prediction is the
-      weakness.</b> SEI beats or matches SP+ on Brier in both holdouts.
-      Its margin error runs 2–4 points worse.</li>
-      <li><b>Bowl games are the hard tail.</b> In 2024 postseason-only
-      prediction, winner accuracy fell to 53%. Short preparation and
-      roster change make bowls noisy for every model.</li>
+      weakness.</b> SEI beats or matches SP+ on Brier. Its margin error
+      runs 2–4 points worse.</li>
+      <li><b>Bowl games are the hard tail.</b> Postseason win accuracy
+      averages 59.5% over 12 seasons. Short preparation and roster
+      change make bowls noisy for every model.</li>
+      <li><b>The current feature set is near its limit.</b> Six
+      independent upgrades failed to beat it. Future gains need new
+      information (quarterback availability, market prices), not new
+      arrangements of the same data.</li>
     </ul>
 
     <h3>Interpretation</h3>
-    <p>SEI is a solid mid-tier power rating with a working playoff signal.
-    Out-of-sample winner accuracy of 64–72% on unseen games sits near the
-    level of the betting market (about 70–72%). The convergence curve has
-    no cliffs: the model degrades smoothly with less data, which means the
-    pipeline is stable. The two honest gaps are margin calibration and
-    second-order schedule strength (games against weak schedules still
-    over-rate teams). Both have known fixes and are on the roadmap.</p>
+    <p>SEI is a solid mid-tier power rating with a working playoff
+    signal. On unplayed regular-season games it picks 75.7% of winners —
+    near the betting market. On bowl games it picks about 60%, which is
+    honest for any model that sees only season-long efficiency. The
+    convergence curve has no cliffs: accuracy degrades smoothly with
+    less data, which means the pipeline is stable. We keep manual
+    weights because they survive the hardest test (unfamiliar games)
+    better than any fitted alternative we measured.</p>
     <p style="color:var(--dim)">Scripts and full notes: work/active/
-    adjust-eval/ (e7_holdout.py, e8_walkforward.py, findings.md). Updated
-    October 2026.</p>`;
+    adjust-eval/ (e7, e8, e18, e19, findings.md). Updated October
+    2026.</p>`;
 }
 
 // map a column key (in any mode) to its key in the current mode
