@@ -526,11 +526,17 @@ function validHtml(){
       <tr><th>Snapshot at end of</th><th>SEI win acc</th><th>Elo win acc</th><th>SEI Brier</th><th>Games</th></tr>
       ${wk}
     </table>
-    <p>The dip at week 14 is real and not a bug: that week is conference
-    championship weekend, a short slate of near-coin-flip games between
-    teams that are genuinely close. Accuracy climbs from ~64% at week 5 to
-    ~72% at week 11 — the board gets sharper as the sample grows, with no
-    help from priors.</p>
+    <p>Rows are game-weighted: each season contributes in proportion to the
+    games actually scored in that week. Read weeks 13–15 with care — the
+    slate thins out late (in most seasons week 15 is a single game,
+    Army–Navy). The week-14 dip is partly real, partly small-sample: the
+    slate is short and tilted toward close matchups, and in the 12-team
+    era the conference championship games land in the week-15 slate — the
+    end-of-week-14 board went 3/9 on title games in 2024 and 6/9 in 2025.
+    (In 2022–23 the title games were played inside week 14 instead, so
+    they sat in the snapshot rather than the prediction target.) Accuracy
+    climbs from ~65% at week 5 to ~73% at week 11 — the board gets sharper
+    as the sample grows, with no help from priors.</p>
 
     <h3>2. Who goes far in the playoffs</h3>
     <p>At each snapshot, we count how many teams that will <i>eventually
