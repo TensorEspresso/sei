@@ -290,7 +290,7 @@ async function boot(){
   METS = await (await fetch("data/metrics.json")).json();
   COLORS = await (await fetch("data/colors.json")).json();
   WEEKLY = await (await fetch("data/weekly.json")).json();
-  VALID = await (await fetch("/api/validation")).json();
+  VALID = await (await fetch("data/validation.json")).json();
   const seasons = await (await fetch("data/seasons.json")).json();
   SEASON = seasons[seasons.length-1];
   const sel = document.getElementById("season");
