@@ -120,9 +120,9 @@
   /* metrics glossary + philosophy panels */
   #glossary, #philo, #valid { display: none; background: var(--panel); border: 1px solid var(--line);
               border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; }
-  /* wide glossary tables scroll inside the panel instead of stretching
-     the whole page sideways on phones */
-  #glossary { overflow-x: auto; }
+  /* wide tables (metrics glossary, validation) scroll inside their panel
+     instead of stretching the whole page sideways on phones */
+  #glossary, #valid, #weekly { overflow-x: auto; }
   #glossary.open, #philo.open, #valid.open { display: block; }
   #glossary h2, #philo h2 { margin: 0 0 4px; font-size: 16px; }
   #glossary .sub, #philo .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 12px; }
@@ -141,6 +141,9 @@
   #valid .vtable th { color: var(--dim); font-size: 10.5px; text-transform: uppercase;
               letter-spacing: .04em; }
   #valid .vtable th:first-child, #valid .vtable td:first-child { text-align: left; }
+  /* let long headers/labels wrap instead of forcing the table wider
+     than the panel (the global td/th nowrap rule would spill text) */
+  #valid .vtable th, #valid .vtable td:first-child { white-space: normal; }
   #philo h3 { margin: 16px 0 4px; font-size: 13px; text-transform: uppercase;
               letter-spacing: .05em; color: var(--dim); }
   #philo p { margin: 6px 0; }
@@ -407,8 +410,8 @@ function philoHtml(){
     argument.</p>
 
     <h3>2. Adjust for opponents, simply</h3>
-    <p>Every per-game number is shifted for the opponent faced, using a
-    strength-weighted pool of games against that same opponent. No hidden
+    <p>Every per-game number is shifted for the opponent faced, using the
+    pool of all other teams' games against that same opponent. No hidden
     Markov chains, no cross-season priors, no projection through the
     schedule. We describe what happened, adjusted for who was across the
     line of scrimmage.</p>
@@ -455,12 +458,12 @@ function philoHtml(){
       fumble%); penalties (rate and yards per penalty). Defense mirrors
       offense, plus havoc and stuff rate. Administrative plays filtered;
       FCS-opponent games excluded.</li>
-      <li><b>Opponent adjustment.</b> Each game's feature minus what a
-      strength-weighted pool of teams performed against that same opponent
-      (leave-one-out), plus the league average. The pool weights each
-      team's game by its SP+ percentile to the 4th power; trust in the pool
-      scales with its effective sample size, blended toward the opponent's
-      own season profile when the sample is thin.</li>
+      <li><b>Opponent adjustment.</b> Each game's feature minus what every
+      other team did against that same opponent (leave-one-out), plus the
+      league average. When the sample against that opponent is thin — at a
+      week-4 snapshot it is often 2-4 games — the estimate blends toward
+      the opponent's own season profile: pool weight = games ÷ (games +
+      16). Nothing outside the games themselves enters the adjustment.</li>
       <li><b>Season rollup.</b> Adjusted game values pooled per team,
       weighted by play count.</li>
       <li><b>Within-season z-scores.</b> Every feature standardized
@@ -557,10 +560,6 @@ function validHtml(){
 
     <h3>What this test does not cover</h3>
     <ul>
-      <li><b>The strength prior.</b> The opponent adjustment weights games
-      by final-season SP+ percentile — the only season-long strength signal
-      we use. The fills themselves come only from games already played at
-      the snapshot; the prior is a rank-weighting, not a stats leak.</li>
       <li><b>Weeks 0–3.</b> Snapshots start at week 4 by design. Earlier,
       both SEI and Elo are near coin-flip; an earlier version of this page
       measured that and it is not useful to display.</li>
