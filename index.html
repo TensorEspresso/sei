@@ -255,6 +255,10 @@ let COMPACT = (()=>{
 // fixed columns (never mode-dependent); core:true = kept in compact mode
 const FIXED = [
   {k:"total_rank", l:"Rk", fmt:v=>v, core:true},
+  {k:"mv", l:"Δ", fmt:(v,r)=>mvCell(r), core:true,
+   tip:"Rank vs the previous weekly snapshot (▲ up, ▼ down, · no move). "
+       +"From the same week-by-week boards as the movers strip — early-season "
+       +"jumps are noise; see the Validation page."},
   {k:"team", l:"Team", left:true, fmt:v=>teamCell(v), core:true},
   {k:"conference", l:"Conf", left:true, fmt:v=>`<td class="conf">${v||""}</td>`},
   {k:"wins", l:"W-L", fmt:(v,r)=>`<td>${r.wins_all??v}-${((r.games_all??r.games)||0)-(r.wins_all??v)}</td>`, core:true},
@@ -297,6 +301,13 @@ function spDelta(r){
   const d = r.sp_rank - r.total_rank;   // + = we rank them higher than SP+
   const c = d>0?"up": d<0?"down":"";
   return `<td class="delta ${c}">${d>0?"+":""}${Math.round(d)}</td>`;
+}
+function mvCell(r){
+  // week-over-week rank movement from the weekly snapshot trails
+  if(r.mv==null) return `<td class="delta">·</td>`;
+  if(r.mv===0) return `<td class="delta">·</td>`;
+  const c = r.mv>0?"up":"down";
+  return `<td class="delta ${c}">${r.mv>0?"▲":"▼"}${r.mv>0?r.mv:-r.mv}</td>`;
 }
 function chipHtml(name){
   const col = COLORS[name] || "";
@@ -610,8 +621,10 @@ function curMetricKey(k){
 async function load(){
   ROWS = await (await fetch(`data/table-${SEASON}.json`)).json();
   TRENDS = await (await fetch(`data/trends-${SEASON}.json`)).json();
+  const MM = mvMap();
   ROWS.forEach(r=>{ r.sp_delta = (r.total_rank!=null&&r.sp_rank!=null)
-                    ? r.sp_rank-r.total_rank : null; });
+                    ? r.sp_rank-r.total_rank : null;
+                    r.mv = MM ? MM.map[r.team] : null; });
   const n = ROWS.length;
   document.getElementById("subtitle").textContent =
     `Sigma Efficiency Index · ${SEASON} · ${n} teams`;
@@ -622,6 +635,22 @@ async function load(){
 
 // season trajectory: week-by-week snapshot ranks from data/trends.
 // TR structure: {season, weeks:[{week, teams:[rank order], sei:[parallel]}]}
+function mvMap(){
+  // {team: delta} between the two latest snapshots; + = moved up.
+  // null if the season has <2 snapshots.
+  if(!TRENDS || (TRENDS.weeks||[]).length < 2) return null;
+  const W = TRENDS.weeks, cur = W[W.length-1], prev = W[W.length-2];
+  const m = {};
+  cur.teams.forEach((t,i)=>{
+    const p = prev.teams.indexOf(t);
+    m[t] = p < 0 ? null : (p+1) - (i+1);  // null: no previous rank (new to board)
+  });
+  return {map:m, prevWk:prev.week, curWk:cur.week};
+}
+function mvFor(team){
+  const mv = mvMap();
+  return mv ? mv.map[team] : null;
+}
 function teamTrail(name){
   // -> {weeks:[...], ranks:[...], sei:[...]} or null if not enough data.
   // 4 snapshots minimum: fewer is just a line from A to B — the same
@@ -649,13 +678,13 @@ function spark(vals, w, h){
 }
 function drawTrends(){
   const el = document.getElementById("movers");
-  if(!TRENDS || (TRENDS.weeks||[]).length < 2){
+  const MM = mvMap();
+  if(!MM){
     el.innerHTML = ""; el.style.display = "none"; return;
   }
   el.style.display = "";
   const W = TRENDS.weeks, cur = W[W.length-1], prev = W[W.length-2];
-  const mv = cur.teams.map((t,i)=>({team:t, rank:i+1,
-             d:(prev.teams.indexOf(t)+1)-(i+1)}));  // + = moved up
+  const mv = cur.teams.map((t,i)=>({team:t, rank:i+1, d:MM.map[t]}));
   const gainers = mv.filter(m=>m.d>0).sort((a,b)=>b.d-a.d).slice(0,10);
   const losers  = mv.filter(m=>m.d<0).sort((a,b)=>a.d-b.d).slice(0,10);
   const row = m=>{
