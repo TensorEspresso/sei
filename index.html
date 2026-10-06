@@ -623,7 +623,9 @@ async function load(){
 // season trajectory: week-by-week snapshot ranks from data/trends.
 // TR structure: {season, weeks:[{week, teams:[rank order], sei:[parallel]}]}
 function teamTrail(name){
-  // -> {weeks:[...], ranks:[...], sei:[...]} or null if not enough data
+  // -> {weeks:[...], ranks:[...], sei:[...]} or null if not enough data.
+  // 4 snapshots minimum: fewer is just a line from A to B — the same
+  // information the movers arrow already carries, drawn bigger.
   if(!TRENDS || !(TRENDS.weeks||[]).length) return null;
   const weeks=[], ranks=[], sei=[];
   for(const wk of TRENDS.weeks){
@@ -631,11 +633,14 @@ function teamTrail(name){
     if(i<0) continue;
     weeks.push(wk.week); ranks.push(i+1); sei.push(wk.sei[i]);
   }
-  return weeks.length >= 2 ? {weeks, ranks, sei} : null;
+  return weeks.length >= 4 ? {weeks, ranks, sei} : null;
 }
 function spark(vals, w, h){
-  // tiny inline SVG polyline, values normalized to their own min/max
-  if(!vals || vals.length<2) return "";
+  // tiny inline SVG polyline, values normalized to their own min/max.
+  // Below 4 points there is no "shape" to show — two snapshots render as
+  // a flat segment that just duplicates the delta arrow, so stay silent
+  // until the trail can actually say something.
+  if(!vals || vals.length < 4) return "";
   const lo=Math.min(...vals), hi=Math.max(...vals), span=(hi-lo)||1;
   const step = w/(vals.length-1);
   const pts = vals.map((v,i)=>`${(i*step).toFixed(1)},${(h-((v-lo)/span)*(h-2)-1).toFixed(1)}`).join(" ");
@@ -660,6 +665,7 @@ function drawTrends(){
       `<span class="mdk ${c}">${m.d>0?"▲":"▼"}${m.d>0?m.d:-m.d}</span></div>`;
   };
   const mvTrail = t => { const tr=teamTrail(t); return tr?tr.sei:null; };
+  const hasSparks = (TRENDS.weeks||[]).length >= 4;
   el.innerHTML = `<summary><h2>Week-over-week movers</h2>
       <span class="wsum">end of wk ${prev.week} → wk ${cur.week}</span></summary>
     <div class="mgrid">
@@ -668,7 +674,7 @@ function drawTrends(){
     </div>
     <div class="mfoot">Rank change since the previous weekly snapshot (early-season
       numbers move a lot — that is noise, read the Validation page for how fast
-      the board settles). Sparkline shows the team's SEI rating, week 4 → current.</div>`;
+      the board settles).${hasSparks ? " Sparkline shows the team's SEI rating, week 4 → current." : ""}</div>`;
 }
 
 // weekly SEI-vs-SP+ discrepancy report panel (only for the report's season)
