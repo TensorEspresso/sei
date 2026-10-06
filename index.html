@@ -500,13 +500,14 @@ function validHtml(){
   };
   const trajWeeks = [4,6,8,10,12,13,14];
   // per-season champion table
-  const champ = S.map(s=>`<tr><td>${s.season}</td><td>${s.champ}</td><td>#${s.champ_final_rank??"—"}</td><td>${s.champ_first_top4_week??"—"}</td><td>${pct(s.postseason.win_acc)}</td><td>${pct(s.postseason.elo_win_acc)}</td></tr>`).join("");
+  const champ = S.filter(s=>s.postseason.win_acc!=null).map(s=>`<tr><td>${s.season}</td><td>${s.champ}</td><td>#${s.champ_final_rank??"—"}</td><td>${s.champ_first_top4_week??"—"}</td><td>${pct(s.postseason.win_acc)}</td><td>${pct(s.postseason.elo_win_acc)}</td></tr>`).join("");
   return `<button class="close" onclick="document.getElementById('valid').classList.remove('open');
       document.getElementById('validBtn').classList.remove('on')">close</button>
     <h2>Validation</h2>
     <div class="sub">One question, asked every week: <b>how well does this
     week's board predict next week's games, and who goes far in the
-    playoffs?</b> For each season 2014–2025, at the end of every week from
+    playoffs?</b> For each season 2014–2025 — plus the live season as it
+    unfolds — at the end of every week from
     week 4 on, we rebuild the whole pipeline (adjustment + composite) from
     only the games played so far, then score it on what happens next.
     Nothing about the future enters the snapshot. Baseline: an Elo model
@@ -564,7 +565,9 @@ function validHtml(){
       both SEI and Elo are near coin-flip; an earlier version of this page
       measured that and it is not useful to display.</li>
       <li><b>2026.</b> The live season runs the same protocol weekly; the
-      current-year board is on the main page.</li>
+      snapshots accumulate as the season goes, and the playoff tests fill
+      in when the postseason is played. The current-year board is on the
+      main page.</li>
     </ul>
     <p style="color:var(--dim)">Protocol: scripts/validate_predictions.py ·
     rebuilt with the weekly data refresh · replaces the 2026-10-05
