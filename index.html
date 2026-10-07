@@ -528,12 +528,11 @@ function validHtml(){
   const f3 = v => v.toFixed(3);
   // next-week table: pooled by week
   const wk = a.by_week.map(w=>`<tr><td>Week ${w.week}</td><td>${pct(w.win_acc)}</td><td>${pct(w.elo_win_acc)}</td><td>${f3(w.brier)}</td><td>${w.n}</td></tr>`).join("");
-  // playoff trajectory tables (era-split)
-  const t4 = VALID.aggregate.playoff_traj.filter(t=>t.era==="top4");
+  // playoff trajectory table (12-team era only; panel covers 2024+)
   const t12 = VALID.aggregate.playoff_traj.filter(t=>t.era==="top12");
   const trajRow = (w) => {
-    const r4 = t4.find(t=>t.week===w), r12 = t12.find(t=>t.week===w);
-    return `<tr><td>Week ${w}</td><td>${r4?pct(r4.hit):"—"}</td><td>${r12?pct(r12.hit):"—"}</td></tr>`;
+    const r12 = t12.find(t=>t.week===w);
+    return `<tr><td>Week ${w}</td><td>${r12?pct(r12.hit):"—"}</td></tr>`;
   };
   const trajWeeks = [4,6,8,10,12,13,14];
   // per-season champion table
@@ -543,7 +542,7 @@ function validHtml(){
     <h2>Validation</h2>
     <div class="sub">One question, asked every week: <b>how well does this
     week's board predict next week's games, and who goes far in the
-    playoffs?</b> For each season 2014–2025 — plus the live season as it
+    playoffs?</b> For each season 2024–2025 — plus the live season as it
     unfolds — at the end of every week from
     week 4 on, we rebuild the whole pipeline (adjustment + composite) from
     only the games played so far, then score it on what happens next.
@@ -551,7 +550,7 @@ function validHtml(){
     (K=32, margin-of-victory adjusted) built from the same games.</div>
 
     <h3>1. Next week's games</h3>
-    <p>Pooled over 12 seasons, ${a.games_predicted} games predicted one
+    <p>Pooled over 2 complete seasons, ${a.games_predicted} games predicted one
     week ahead. SEI: <b>${pct(a.win_acc)}</b> winners called, Brier
     ${f3(a.brier)}, margin error ${a.mae.toFixed(1)} points. Elo baseline:
     ${pct(a.elo_win_acc)}, Brier ${f3(a.elo_brier)}. SEI beats the
@@ -563,22 +562,18 @@ function validHtml(){
     <p>Rows are game-weighted: each season contributes in proportion to the
     games actually scored in that week. Read weeks 13–15 with care — the
     slate thins out late (in most seasons week 15 is a single game,
-    Army–Navy). The week-14 dip is partly real, partly small-sample: the
-    slate is short and tilted toward close matchups, and in the 12-team
-    era the conference championship games land in the week-15 slate — the
-    end-of-week-14 board went 3/9 on title games in 2024 and 6/9 in 2025.
-    (In 2022–23 the title games were played inside week 14 instead, so
-    they sat in the snapshot rather than the prediction target.) Accuracy
-    climbs from ~65% at week 5 to ~73% at week 11 — the board gets sharper
-    as the sample grows, with no help from priors.</p>
+    Army–Navy), and conference championship games land in the week-15
+    slate. Accuracy climbs from ~65% early season to ~72–75% in late
+    November — the board gets sharper as the sample grows, with no help
+    from priors. Weeks 14–15 carry tiny samples now; read them as
+    anecdotes, not statistics.</p>
 
     <h3>2. Who goes far in the playoffs</h3>
     <p>At each snapshot, we count how many teams that will <i>eventually
-    make the playoff field</i> are already inside our top N (top 4 for the
-    pre-2024 four-team era, top 12 from 2024 on; the field is derived from
-    the games data, not a fixed list).</p>
+    make the playoff field</i> are already inside our top 12 (the field
+    is derived from the games data, not a fixed list).</p>
     <table class="vtable">
-      <tr><th>Snapshot at end of</th><th>4-team era: eventual field in top 4</th><th>12-team era: eventual field in top 12</th></tr>
+      <tr><th>Snapshot at end of</th><th>12-team era: eventual field in top 12</th></tr>
       ${trajWeeks.map(trajRow).join("")}
     </table>
     <p>By late November the board holds roughly 6 in 10 of the eventual
@@ -594,9 +589,10 @@ function validHtml(){
       <tr><th>Season</th><th>Champion</th><th>SEI rank at season end</th><th>First week in our top 4</th><th>Playoff-game win acc</th><th>Elo</th></tr>
       ${champ}
     </table>
-    <p>In 10 of 12 seasons the eventual champion sat in our top 4 by week
-    8. The exceptions are the resume-driven runs (LSU 2019 enters at week
-    14) and early-season uncertainty (Alabama 2020 at week 13).</p>
+    <p>In both complete seasons the eventual champion sat in our top 4 by
+    week 8 (Ohio State 2024 entered at week 6; Indiana 2025 at week 4).
+    The market-baseline comparison was retired with the pre-2024 seasons —
+    the closing-lines mirror only covers 2020–2023.</p>
 
     <h3>What this test does not cover</h3>
     <ul>
