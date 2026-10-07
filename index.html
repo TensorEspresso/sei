@@ -485,13 +485,16 @@ function philoHtml(){
     <h3>Methodology</h3>
     <p>The pipeline, in order:</p>
     <ol>
-      <li><b>Per-game features.</b> From play-by-play: PPA per play on
-      first, second, and third down; 4th-down aggression (go-for-it rate ×
-      conversion); drive outcomes (TD% and FG% of drives); red-zone TD%;
-      explosives (plays ≥20 yards); drive-ending ball security (INT%,
-      fumble%); penalties (rate and yards per penalty). Defense mirrors
-      offense, plus havoc and stuff rate. Administrative plays filtered;
-      FCS-opponent games excluded.</li>
+      <li><b>Per-game features.</b> From play-by-play: PPA per play by
+      down-group and play type (first+second down rush, first+second
+      down pass, third down rush, third down pass); 4th-down aggression
+      (go-for-it rate × conversion); points per drive (reconstructed:
+      TD 7, FG 3, plus special-teams points); red-zone TD%; explosives
+      (scrimmage plays ≥20 yards); drive-ending ball security (INT%,
+      fumble%); line play — sack rate (sacks per dropback), runs
+      stuffed, sack-free havoc; penalties (rate and yards per
+      penalty). Defense mirrors offense. Administrative plays
+      filtered; FCS-opponent games excluded.</li>
       <li><b>Opponent adjustment.</b> Each game's feature minus what every
       other team did against that same opponent (leave-one-out), plus the
       league average. When the sample against that opponent is thin — at a
