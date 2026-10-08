@@ -821,17 +821,19 @@ async function openTeam(name){
   }).join("");
   const trail = teamTrail(d.team);
   const trailHtml = trail ? (()=>{
-    const w=260,h=64, lo=Math.min(...trail.sei), hi=Math.max(...trail.sei), span=(hi-lo)||1;
-    const step=w/(trail.sei.length-1);
-    const pts = trail.sei.map((v,i)=>`${(i*step).toFixed(1)},${(h-((v-lo)/span)*(h-10)-5).toFixed(1)}`);
-    const area = `0,${h} ` + pts.join(" ") + ` ${w},${h}`;
+    const w=280,h=64,px=14, lo=Math.min(...trail.sei), hi=Math.max(...trail.sei), span=(hi-lo)||1;
+    // px gutter on each side: centered #rank / w-week labels at the end
+    // points used to hang off the viewBox edges and got clipped.
+    const step=(w-2*px)/(trail.sei.length-1);
+    const pts = trail.sei.map((v,i)=>`${(px+i*step).toFixed(1)},${(h-((v-lo)/span)*(h-10)-5).toFixed(1)}`);
+    const area = `${px},${h} ` + pts.join(" ") + ` ${(px+(trail.sei.length-1)*step).toFixed(1)},${h}`;
     const lbl = trail.weeks.map((wk,i)=>{
       const [x,y]=pts[i].split(",");
       return `<text x="${x}" y="${(+y-6).toFixed(0)}" fill="var(--dim)" font-size="9" text-anchor="middle">#${trail.ranks[i]}</text>`;
     }).join("");
-    const xlbl = trail.weeks.map((wk,i)=>`<text x="${(i*step).toFixed(1)}" y="${h+2}" fill="var(--dim)" font-size="8.5" text-anchor="middle">w${wk}</text>`).join("");
+    const xlbl = trail.weeks.map((wk,i)=>`<text x="${(px+i*step).toFixed(1)}" y="${h+2}" fill="var(--dim)" font-size="8.5" text-anchor="middle">w${wk}</text>`).join("");
     return `<h3>Season trajectory — SEI by weekly snapshot (rank labeled)</h3>
-      <svg viewBox="0 -14 ${w} ${h+12}" style="width:100%;max-width:320px;height:auto">
+      <svg viewBox="0 -14 ${w} ${h+24}" style="width:100%;max-width:320px;height:auto">
         <polygon points="${area}" fill="color-mix(in srgb, var(--accent) 14%, transparent)"/>
         <polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2"/>
         ${lbl}${xlbl}
