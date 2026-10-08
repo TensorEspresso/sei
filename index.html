@@ -264,9 +264,9 @@ const FIXED = [
   {k:"wins", l:"W-L", fmt:(v,r)=>`<td>${r.wins_all??v}-${((r.games_all??r.games)||0)-(r.wins_all??v)}</td>`, core:true},
   {k:"margin", l:"Margin", fmt:v=>`<td>${v>0?"+":""}${Math.round(v)}</td>`},
   {k:"total", l:"SEI", fmt:z, tip:"Sigma Efficiency Index = weighted sum of offense + defense z-scores. Units: SDs vs that season's field. Higher = better.", core:true},
-  {k:"off_score", l:"Off", fmt:z, tip:"Weighted sum of the 12 offensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"off_score", l:"Off", fmt:z, tip:"Weighted sum of the 14 offensive z-scores (weights in each metric's tooltip). SDs vs season field."},
   {k:"off_rank", l:"Off Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by offense score (click header to sort the whole table by offense).", core:true},
-  {k:"def_score", l:"Def", fmt:z, tip:"Weighted sum of the 14 defensive z-scores (weights in each metric's tooltip). SDs vs season field."},
+  {k:"def_score", l:"Def", fmt:z, tip:"Weighted sum of the 15 defensive z-scores (weights in each metric's tooltip). SDs vs season field."},
   {k:"def_rank", l:"Def Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"Rank by defense score (click header to sort the whole table by defense).", core:true},
   {k:"sp_rank", l:"SP+ Rk", fmt:v=>`<td>${v??"—"}</td>`, tip:"F/+ (SP+) overall rank for comparison."},
   {k:"sp_delta", l:"vs SP+", fmt:(v,r)=>spDelta(r), tip:"SP+ rank − our rank. Positive = we rank them higher than SP+ does.", core:true},
@@ -506,12 +506,13 @@ function philoHtml(){
       <li><b>Within-season z-scores.</b> Every feature standardized
       against that season's field, flipped so higher = better.</li>
       <li><b>Manual weights.</b> Offense and defense each sum to 1.0.
-      Category budgets: PPA by down ~26%, drive outcomes ~21%, red zone
-      ~13%, explosiveness ~11%, aggression ~8%, ball security ~12%,
-      discipline ~7% (defense adds havoc/stuff ~8%). The weights were set
-      by category budget, then informed by profiling every champion and
-      semifinalist 2023–2025: drive outcomes and PPA separate champs most;
-      penalties, FG frequency, and stuff rate do not separate them at all.</li>
+      Category budgets: PPA by down ~27%, drive outcomes ~21%, red zone
+      ~13%, explosiveness ~10%, aggression ~6%, ball security ~10–12%,
+      line play ~6–9%, discipline ~4–5%. The weights were set
+      by category budget, then informed by profiling the z-signature of
+      recent Final Four teams (2024–25): drive outcomes and PPA separate
+      champs most; penalties, Havoc, and stuff rate do not separate them
+      at all and are kept at token weight for discipline value.</li>
       <li><b>Composite.</b> SEI = offense z-score sum + defense z-score
       sum. Units are standard deviations against that season's field.</li>
     </ol>
