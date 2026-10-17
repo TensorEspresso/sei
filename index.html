@@ -146,6 +146,10 @@
   #valid .vtable th, #valid .vtable td:first-child { white-space: normal; }
   #philo h3 { margin: 16px 0 4px; font-size: 13px; text-transform: uppercase;
               letter-spacing: .05em; color: var(--dim); }
+  #philo h4 { margin: 14px 0 4px; font-size: 13px; font-weight: 650;
+              color: var(--text); }
+  #philo ol { margin: 6px 0; padding-left: 22px; }
+  #philo li { margin: 4px 0; }
   #philo p { margin: 6px 0; }
   #philo ul { margin: 6px 0; padding-left: 20px; }
   #philo li { margin: 4px 0; }
@@ -516,6 +520,41 @@ function philoHtml(){
       <li><b>Composite.</b> SEI = offense z-score sum + defense z-score
       sum. Units are standard deviations against that season's field.</li>
     </ol>
+    <h4>Worked example: Indiana at Nebraska (Oct 10, 2026)</h4>
+    <p>Step 2 above, with real numbers from the last week. Feature:
+    <b>points per drive</b> (offense). Indiana won 20–17 and scored 1.818
+    points per drive (20 points ÷ 11 drives). That raw number looks
+    modest. The adjustment asks what the number means against this
+    opponent.</p>
+    <ol>
+      <li><b>The pool.</b> Every other team's points per drive against
+      Nebraska: Ohio 1.667, Bowling Green 1.273, Michigan State 1.182,
+      Maryland 1.438. Pool mean = <b>1.390</b> over 4 games. Indiana's
+      own game is excluded (leave-one-out).</li>
+      <li><b>The fallback.</b> The pool is only 4 games. Nebraska's own
+      season profile — what they allow on this axis — is
+      <b>1.475</b>.</li>
+      <li><b>The blend.</b> Pool weight = 4 ÷ (4 + 16) = 0.200. Fill =
+      (4 × 1.390 + 16 × 1.475) ÷ 20 = <b>1.458</b>. Expected output
+      against Nebraska, per drive.</li>
+      <li><b>Subtract the expectation, add the league average.</b> The
+      2026 league average is 2.283. Adjusted value =
+      1.818 − 1.458 + 2.283 = <b>2.643</b>.</li>
+      <li><b>The reading.</b> Against Nebraska, teams score about 0.9
+      points per drive below the league norm. Indiana scored 1.818 —
+      about 0.36 above what the field managed. After re-centering,
+      Indiana's drive scoring sits <i>above</i> the average team, not
+      below it. The raw 1.818 describes the opponent as much as the
+      performance; the adjusted 2.643 describes the performance.</li>
+    </ol>
+    <p>The defense side uses the same math with the cross-axis
+    fallback. Indiana's defense allowed 0.004 PPA on first+second-down
+    passes. The other four teams allowed 0.365; Nebraska's own offense
+    profile is 0.293; fill = (4 × 0.365 + 16 × 0.293) ÷ 20 = 0.307;
+    adjusted = 0.004 − 0.307 + 0.140 (league avg) = <b>−0.163</b> —
+    Nebraska's offense produced less than an average offense would have
+    against that same defense profile. It enters the composite with
+    signs flipped so lower = better.</p>
     <p style="color:var(--dim)">There is no shrinkage, no ridge fit, no
     neural net, and no cross-season carryover. Ongoing validation is the
     weekly-snapshot protocol — see the Validation page.</p>`;
