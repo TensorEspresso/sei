@@ -521,7 +521,9 @@ function philoHtml(){
       sum. Units are standard deviations against that season's field.</li>
     </ol>
     <h4>Worked example: Indiana at Nebraska (Oct 10, 2026)</h4>
-    <p>Step 2 above, with real numbers from the last week. Feature:
+    <p>Step 2 above, with real numbers from that game, taken at the
+    snapshot right after it (six weeks in). Pool and fill numbers shift
+    a little later in the season as more teams play Nebraska. Feature:
     <b>points per drive</b> (offense). Indiana won 20–17 and scored 1.818
     points per drive (20 points ÷ 11 drives). That raw number looks
     modest. The adjustment asks what the number means against this
@@ -540,21 +542,26 @@ function philoHtml(){
       <li><b>Subtract the expectation, add the league average.</b> The
       2026 league average is 2.283. Adjusted value =
       1.818 − 1.458 + 2.283 = <b>2.643</b>.</li>
-      <li><b>The reading.</b> Against Nebraska, teams score about 0.9
-      points per drive below the league norm. Indiana scored 1.818 —
-      about 0.36 above what the field managed. After re-centering,
-      Indiana's drive scoring sits <i>above</i> the average team, not
-      below it. The raw 1.818 describes the opponent as much as the
-      performance; the adjusted 2.643 describes the performance.</li>
+      <li><b>The reading.</b> Against Nebraska, teams score about 0.8
+      points per drive below the league norm (1.458 vs 2.283). Indiana
+      scored 1.818 — 0.36 above what the field managed. After
+      re-centering, Indiana's drive scoring sits <i>above</i> the
+      average team, not below it. The raw 1.818 describes the opponent
+      as much as the performance; the adjusted 2.643 describes the
+      performance.</li>
     </ol>
-    <p>The defense side uses the same math with the cross-axis
-    fallback. Indiana's defense allowed 0.004 PPA on first+second-down
-    passes. The other four teams allowed 0.365; Nebraska's own offense
-    profile is 0.293; fill = (4 × 0.365 + 16 × 0.293) ÷ 20 = 0.307;
-    adjusted = 0.004 − 0.307 + 0.140 (league avg) = <b>−0.163</b> —
-    Nebraska's offense produced less than an average offense would have
-    against that same defense profile. It enters the composite with
-    signs flipped so lower = better.</p>
+    <p>The defense side uses the same math, with the fallback read from
+    the opponent's own offense (what that offense typically does).
+    Nebraska's offense gained 0.004 PPA on first+second-down passes
+    against Indiana's defense. The fill — what Nebraska's offense would
+    be expected to produce — comes from the other four defenses
+    (0.365) blended 4:16 with Nebraska's own season profile (0.293):
+    0.307. So the game put Nebraska 0.303 below its expected production
+    on this axis. Re-centered to the league average: adjusted =
+    0.004 − 0.307 + 0.140 = <b>−0.163</b>, against the
+    <i>average</i> defense's 0.140 — same 0.303 gap, now readable next
+    to every other team's number. Lower is better; the z-score step
+    flips the sign.</p>
     <p style="color:var(--dim)">There is no shrinkage, no ridge fit, no
     neural net, and no cross-season carryover. Ongoing validation is the
     weekly-snapshot protocol — see the Validation page.</p>`;
